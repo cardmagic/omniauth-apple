@@ -9,12 +9,12 @@ module OmniAuth
       option :name, 'apple'
 
       option :client_options,
-             site: 'https://appleid.apple.com',
-             authorize_url: '/auth/authorize',
-             token_url: '/auth/token'
+        site: 'https://appleid.apple.com',
+        authorize_url: '/auth/authorize',
+        token_url: '/auth/token'
       option :authorize_params,
-             response_mode: 'form_post',
-             scope: 'email name'
+        response_mode: 'form_post',
+        scope: 'email name'
       option :authorized_client_ids, []
 
       uid { id_info['sub'] }
@@ -58,25 +58,27 @@ module OmniAuth
 
       def id_info
         @id_info ||= if request.params&.key?('id_token') || access_token&.params&.key?('id_token')
-                       id_token = request.params['id_token'] || access_token.params['id_token']
-                       jwt_options = {
-                         verify_iss: true,
-                         iss: 'https://appleid.apple.com',
-                         verify_iat: true,
-                         verify_aud: true,
-                         aud: [options.client_id].concat(options.authorized_client_ids),
-                         algorithms: ['RS256'],
-                         jwks: fetch_jwks
-                       }
-                       payload, _header = ::JWT.decode(id_token, nil, true, jwt_options)
-                       verify_nonce!(payload)
-                       payload
-                     end
+          id_token = request.params['id_token'] || access_token.params['id_token']
+          jwt_options = {
+            verify_iss: true,
+            iss: 'https://appleid.apple.com',
+            verify_iat: true,
+            verify_aud: true,
+            aud: [options.client_id].concat(options.authorized_client_ids),
+            algorithms: ['RS256'],
+            jwks: fetch_jwks
+          }
+          payload, _header = ::JWT.decode(id_token, nil, true, jwt_options)
+          verify_nonce!(payload)
+          payload
+        end
       end
 
       def fetch_jwks
-        uri = URI.parse('https://appleid.apple.com/auth/keys')
-        response = Net::HTTP.get_response(uri)
+        http = Net::HTTP.new('appleid.apple.com', 443)
+        http.use_ssl = true
+        request = Net::HTTP::Get.new('/auth/keys', 'User-Agent' => 'ruby/omniauth-apple')
+        response = http.request(request)
         JSON.parse(response.body, symbolize_names: true)
       end
 
@@ -90,10 +92,10 @@ module OmniAuth
 
       def client_id
         @client_id ||= if id_info.nil?
-                         options.client_id
-                       else
-                         id_info['aud'] if options.authorized_client_ids.include? id_info['aud']
-                       end
+          options.client_id
+        else
+          id_info['aud'] if options.authorized_client_ids.include? id_info['aud']
+        end
       end
 
       def user_info
