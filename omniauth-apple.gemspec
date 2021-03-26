@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require "omniauth/apple/version"
 
 Gem::Specification.new do |spec|
-  spec.name          = "omniauth-apple"
+  spec.name          = "cardmagic-omniauth-apple"
   spec.version       = OmniAuth::Apple::VERSION
   spec.authors       = ["nhosoya", "Fabian Jäger"]
   spec.email         = ["hnhnnhnh@gmail.com", "fabian@mailbutler.io"]
